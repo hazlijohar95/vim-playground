@@ -130,7 +130,7 @@ A: No. But you'll be able to exit Vim, which puts you ahead of millions.
 A: Because the last thing the world needs is another `create-react-app` with 847 dependencies to display some text.
 
 **Q: I found a bug.**
-A: That's not a question. But open an issue anyway.
+A: You don't want to read the next para
 
 ---
 

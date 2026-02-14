@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vim.school — Learn Neovim by doing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS — Derived from OpenCode
+   ═══════════════════════════════════════════ */
+:root {
+  /* Smoke (warm gray) palette */
+  --smoke-1:  #131010;
+  --smoke-2:  #1b1818;
+  --smoke-3:  #252121;
+  --smoke-4:  #2d2828;
+  --smoke-5:  #343030;
+  --smoke-6:  #3e3939;
+  --smoke-7:  #4b4646;
+  --smoke-8:  #645f5f;
+  --smoke-9:  #716c6b;
+  --smoke-10: #7f7979;
+  --smoke-11: #b7b1b1;
+  --smoke-12: #f1ecec;
+
+  /* Semantic backgrounds */
+  --bg-base:     var(--smoke-1);
+  --bg-raised:   var(--smoke-2);
+  --bg-surface:  var(--smoke-3);
+  --bg-hover:    var(--smoke-4);
+  --bg-active:   var(--smoke-5);
+
+  /* Semantic text */
+  --text-strong:  var(--smoke-12);
+  --text-base:    var(--smoke-11);
+  --text-weak:    var(--smoke-9);
+  --text-weaker:  var(--smoke-8);
+  --text-muted:   var(--smoke-7);
+
+  /* Semantic borders */
+  --border-base:   rgba(113,108,107,0.15);
+  --border-hover:  rgba(113,108,107,0.25);
+  --border-strong: rgba(113,108,107,0.35);
+  --border-focus:  var(--cobalt);
+
+  /* Accent colors */
+  --cobalt:    #034cff;
+  --cobalt-l:  #89b5ff;
+  --ember:     #fc533a;
+  --ember-l:   #ffba92;
+  --apple:     #12c905;
+  --apple-l:   #7fd88f;
+  --solaris:   #fcd53a;
+  --lilac:     #edb2f1;
+  --mint:      #c8ffc4;
+  --peach:     #fab283;
+
+  /* Syntax */
+  --syn-string:    #00ceb9;
+  --syn-primitive: #ffba92;
+  --syn-property:  #ff9ae2;
+  --syn-type:      #ecf58c;
+  --syn-constant:  #93e9f6;
+  --syn-comment:   var(--text-weak);
+  --syn-keyword:   var(--smoke-10);
+  --syn-variable:  var(--text-strong);
+
+  /* Typography */
+  --font-sans: "Inter", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+  --size-xs:  11px;
+  --size-sm:  13px;
+  --size-base: 14px;
+  --size-lg:  16px;
+  --size-xl:  20px;
+  --size-2xl: 28px;
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* Radius */
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
+
+  /* Shadows (OpenCode ring-shadow pattern) */
+  --shadow-border: 0 0 0 1px var(--border-base);
+  --shadow-border-hover: 0 0 0 1px var(--border-hover);
+  --shadow-sm: 0 1px 2px -0.5px rgba(0,0,0,0.3), 0 0.5px 1.5px rgba(0,0,0,0.2);
+  --shadow-md: 0 6px 12px -2px rgba(0,0,0,0.3), 0 4px 8px -2px rgba(0,0,0,0.2);
+  --shadow-focus: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--cobalt);
+
+  /* Transitions */
+  --t-fast: 100ms ease-out;
+  --t-base: 150ms ease-out;
+  --t-slow: 300ms ease-out;
+}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-base);
+  font-family: var(--font-sans);
+  font-size: var(--size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+::selection { background: rgba(3,76,255,0.3); color: var(--text-strong); }
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════ */
+.app {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: 100vh;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  background: var(--bg-base);
+  border-right: 1px solid var(--border-base);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-brand {
+  padding: var(--sp-5) var(--sp-5) var(--sp-3);
+  border-bottom: 1px solid var(--border-base);
+}
+.sidebar-brand h1 {
+  font-family: var(--font-mono);
+  font-size: var(--size-lg);
+  font-weight: 700;
+  color: var(--text-strong);
+  letter-spacing: -0.32px;
+}
+.sidebar-brand h1 span { color: var(--peach); }
+.sidebar-brand p {
+  font-size: var(--size-sm);
+  color: var(--text-weak);
+  margin-top: 2px;
+}
+
+/* Progress bar */
+.progress-wrap {
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border-base);
+}
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-1);
+}
+.progress-label {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  color: var(--text-weak);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.progress-count {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  color: var(--peach);
+}
+.progress-bar {
+  height: 3px;
+  background: var(--smoke-4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--peach), var(--ember));
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Lesson nav */
+.nav-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-2) 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--smoke-5) transparent;
+}
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--sp-3) var(--sp-5) var(--sp-1);
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-5);
+  cursor: pointer;
+  transition: background var(--t-fast);
+  border-left: 2px solid transparent;
+  font-size: var(--size-sm);
+  color: var(--text-base);
+}
+.nav-item:hover { background: var(--bg-raised); }
+.nav-item.active {
+  background: var(--bg-surface);
+  border-left-color: var(--peach);
+  color: var(--text-strong);
+}
+.nav-check {
+  width: 16px; height: 16px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: transparent;
+  transition: all var(--t-base);
+}
+.nav-item.done .nav-check {
+  border-color: var(--apple);
+  background: rgba(18,201,5,0.1);
+  color: var(--apple);
+}
+.nav-item-label { flex: 1; }
+.nav-keys {
+  display: flex; gap: 2px;
+  margin-left: auto;
+}
+.nav-keys kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 0px 4px;
+  border-radius: var(--r-xs);
+  background: var(--smoke-4);
+  color: var(--text-weak);
+  line-height: 1.6;
+}
+
+/* Mode toggle */
+.mode-toggle {
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--border-base);
+}
+.mode-toggle-btn {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: none;
+  background: var(--bg-surface);
+  color: var(--text-base);
+  cursor: pointer;
+  transition: all var(--t-base);
+  box-shadow: var(--shadow-border);
+}
+.mode-toggle-btn:hover {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-border-hover);
+}
+.mode-toggle-btn:active { transform: scale(0.99); }
+.mode-toggle-btn .label { color: var(--text-weak); }
+
+/* ─── MAIN ─── */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--smoke-2);
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border-base);
+  background: var(--bg-base);
+  flex-shrink: 0;
+}
+.lesson-badge {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 700;
+  background: var(--smoke-5);
+  color: var(--text-strong);
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+}
+.lesson-title {
+  font-family: var(--font-sans);
+  font-size: var(--size-lg);
+  font-weight: 600;
+  color: var(--text-strong);
+  letter-spacing: -0.16px;
+}
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.streak-badge {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  color: var(--solaris);
+  background: rgba(252,213,58,0.1);
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+}
+.reset-btn {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 500;
+  color: var(--text-weak);
+  background: none;
+  border: 1px solid var(--border-base);
+  padding: 2px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.reset-btn:hover { border-color: var(--ember); color: var(--ember); }
+
+/* Content area */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5);
+  gap: var(--sp-4);
+  overflow-y: auto;
+}
+
+/* Instruction card */
+.instr-card {
+  background: var(--bg-base);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-5);
+  box-shadow: var(--shadow-border), var(--shadow-sm);
+  font-size: var(--size-sm);
+  line-height: 1.8;
+  color: var(--text-base);
+}
+.instr-card strong { color: var(--peach); font-weight: 600; }
+.instr-card code {
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  background: var(--smoke-4);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  color: var(--syn-constant);
+}
+
+/* Task card */
+.task-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--bg-base);
+  box-shadow: 0 0 0 1px rgba(3,76,255,0.2);
+  transition: all var(--t-slow);
+}
+.task-card.done {
+  box-shadow: 0 0 0 1px rgba(18,201,5,0.3);
+  background: rgba(18,201,5,0.04);
+}
+.task-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--cobalt-l);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 800;
+  color: transparent;
+  transition: all var(--t-base);
+}
+.task-card.done .task-dot {
+  border-color: var(--apple);
+  background: var(--apple);
+  color: var(--smoke-1);
+}
+.task-label {
+  font-size: var(--size-sm);
+  font-weight: 500;
+  color: var(--text-base);
+}
+.task-label code {
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  background: var(--smoke-4);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  color: var(--syn-constant);
+}
+.task-card.done .task-label { color: var(--apple-l); }
+
+/* ─── TERMINAL ─── */
+.term-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.term {
+  flex: 1;
+  background: var(--smoke-1);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 1px var(--border-base), var(--shadow-md);
+  transition: box-shadow var(--t-base);
+  cursor: text;
+}
+.term:focus-within {
+  box-shadow: 0 0 0 1px var(--border-hover), var(--shadow-md);
+}
+
+.term-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-base);
+  user-select: none;
+}
+.tdot { width: 8px; height: 8px; border-radius: 50%; }
+.tdot.r { background: #ff5f57; opacity: 0.8; }
+.tdot.y { background: #febc2e; opacity: 0.8; }
+.tdot.g { background: #28c840; opacity: 0.8; }
+.term-chrome-title {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.term-body {
+  flex: 1;
+  padding: var(--sp-2) 0;
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  line-height: 1.6;
+  overflow-y: auto;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--smoke-5) transparent;
+}
+
+.tl {
+  display: flex;
+  padding: 0 14px;
+  min-height: 1.6em;
+  transition: background var(--t-fast);
+}
+.tl.cur { background: rgba(241,236,236,0.02); }
+
+.tl-num {
+  color: var(--smoke-7);
+  user-select: none;
+  width: 3ch;
+  text-align: right;
+  margin-right: 2ch;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.tl-num.cur { color: var(--peach); font-weight: 500; }
+
+.tl-content {
+  flex: 1;
+  white-space: pre;
+}
+
+/* Cells */
+.c { position: relative; }
+.c.cur-block { background: var(--smoke-12); color: var(--smoke-1); }
+.c.cur-line::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 1.5px;
+  background: var(--smoke-12);
+}
+.c.sel { background: rgba(3,76,255,0.25); }
+
+/* Statusbar */
+.term-status {
+  display: flex;
+  align-items: center;
+  padding: 2px 14px;
+  border-top: 1px solid var(--border-base);
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 500;
+  gap: var(--sp-2);
+  background: var(--bg-raised);
+}
+.st-mode {
+  padding: 1px 8px;
+  border-radius: var(--r-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+.st-mode.normal { background: var(--cobalt); color: #fff; }
+.st-mode.insert { background: var(--apple); color: var(--smoke-1); }
+.st-mode.visual { background: var(--lilac); color: var(--smoke-1); }
+.st-mode.command { background: var(--solaris); color: var(--smoke-1); }
+.st-file { color: var(--text-muted); }
+.st-right { margin-left: auto; color: var(--text-muted); }
+
+/* Command line */
+.term-cmd {
+  padding: 2px 14px;
+  border-top: 1px solid var(--border-base);
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  min-height: 1.6em;
+  display: none;
+  background: var(--bg-base);
+}
+.term-cmd.vis { display: block; }
+.term-cmd .cp { color: var(--solaris); font-weight: 700; }
+.term-cmd .cc { background: var(--smoke-12); color: var(--smoke-1); }
+
+/* ─── KEY DISPLAY (live keystroke feedback) ─── */
+.keystroke-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-base);
+  min-height: 36px;
+}
+.ks-label {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.ks-keys {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+  overflow: hidden;
+}
+.ks-key {
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: var(--smoke-4);
+  color: var(--text-strong);
+  box-shadow: 0 1px 0 var(--smoke-6);
+  animation: keyPop 0.2s ease-out;
+  flex-shrink: 0;
+}
+@keyframes keyPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.ks-hint {
+  font-size: var(--size-xs);
+  color: var(--text-weak);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─── HINTS PANEL ─── */
+.hints-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-base);
+  border-radius: 0 0 var(--r-xl) var(--r-xl);
+}
+.hint-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  border: 0.5px solid var(--border-base);
+  background: var(--bg-raised);
+  color: var(--text-weak);
+  transition: all var(--t-fast);
+  white-space: nowrap;
+}
+.hint-tag kbd {
+  color: var(--syn-constant);
+  font-weight: 600;
+  margin-right: 3px;
+}
+.hint-tag.flash {
+  border-color: var(--apple);
+  color: var(--apple-l);
+  background: rgba(18,201,5,0.06);
+}
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed;
+  bottom: var(--sp-6);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--smoke-4);
+  border: 1px solid var(--apple);
+  border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-5);
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  font-weight: 600;
+  color: var(--apple-l);
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.toast.vis { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ─── CELEBRATION ─── */
+.confetti {
+  position: fixed;
+  pointer-events: none;
+  z-index: 200;
+  width: 8px; height: 8px;
+  border-radius: 1px;
+  animation: confettiFall 1.5s ease-out forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(120vh) rotate(720deg) scale(0.3); opacity: 0; }
+}
+
+/* ─── SANDBOX indicator ─── */
+.sandbox-badge {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  color: var(--cobalt-l);
+  background: rgba(3,76,255,0.08);
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+}
+
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="app">
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar"></div>
+
+<!-- Main -->
+<div class="main" id="main"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const LESSONS = [
+  { group: "Modes", items: [
+    { id:"insert", title:"Enter INSERT mode", keys:["i"], desc:'Neovim starts in <strong>NORMAL mode</strong> — keys do actions, not typing. Press <code>i</code> to switch to <strong>INSERT</strong> and type normally. Press <code>Esc</code> to go back.', task:'Press <code>i</code>, type something, then press <code>Esc</code>', check:e=>e._insertedAndEscaped, text:["function greet() {",'  return "hello"',"}"], cur:{r:1,c:2} },
+    { id:"visual", title:"Select with VISUAL", keys:["v"], desc:'Press <code>v</code> to start selecting text. Move with <code>h j k l</code> to grow the selection. Press <code>Esc</code> to cancel, or <code>d</code> to delete, <code>y</code> to copy.', task:'Press <code>v</code>, select a few characters with <code>l</code>, then press <code>Esc</code>', check:e=>e._selectedAndEscaped, text:['const name = "Hazli"',"const age = 30","console.log(name)"], cur:{r:0,c:6} },
+    { id:"command", title:"Commands with :", keys:[":"], desc:'Press <code>:</code> to type a command at the bottom of the screen. Commands like <code>:w</code> (save), <code>:q</code> (quit), and <code>:wq</code> (save + quit). Press <code>Enter</code> to execute.', task:'Type <code>:w</code> then press <code>Enter</code> to save', check:e=>e._saved, text:["// my important file","const data = 42",""], cur:{r:0,c:0} },
+  ]},
+  { group: "Movement", items: [
+    { id:"hjkl", title:"Move with h j k l", keys:["h","j","k","l"], desc:'<code>h</code> = left, <code>j</code> = down, <code>k</code> = up, <code>l</code> = right. Your fingers never leave the home row. Arrow keys also work.', task:'Navigate to line 4 using <code>j</code> (anywhere on that line)', check:e=>e.row===3, text:["const a = 1","const b = 2","const c = 3","const d = 4  ← get here","const e = 5"], cur:{r:0,c:0} },
+    { id:"word", title:"Jump by words", keys:["w","b"], desc:'<code>w</code> jumps to the start of the next word. <code>b</code> jumps back. Way faster than holding <code>l</code>.', task:'Press <code>w</code> three times to jump through words', check:e=>e._wCount>=3, text:['const message = "hello world"',"console.log(message)"], cur:{r:0,c:0} },
+    { id:"gg", title:"Top and bottom", keys:["gg","G"], desc:'<code>gg</code> = jump to line 1. <code>G</code> (Shift+G) = jump to the last line. Instant teleport.', task:'Press <code>G</code> to go to the bottom, then <code>gg</code> back to top', check:e=>e._wentBottomAndTop, text:["// line 1 — start here","// line 2","// line 3","// line 4","// line 5","// line 6","// line 7","// line 8","// line 9 — go here first"], cur:{r:0,c:0} },
+  ]},
+  { group: "Editing", items: [
+    { id:"dd", title:"Delete line with dd", keys:["dd"], desc:'Press <code>d</code> twice to delete the entire line. It also copies it so you can paste with <code>p</code>.', task:'Move to line 2 with <code>j</code> and delete it with <code>dd</code>', check:e=>e._deletedLine, text:["const keep = 1","const DELETE_ME = 999","const keep2 = 3"], cur:{r:0,c:0} },
+    { id:"undo", title:"Undo with u", keys:["u"], desc:'<code>u</code> = undo. Like Ctrl+Z. Press it multiple times to keep undoing.', task:'Delete line 2 with <code>dd</code>, then press <code>u</code> to undo', check:e=>e._undid, text:["line one","line two — delete then undo","line three"], cur:{r:1,c:0} },
+    { id:"yank", title:"Copy & paste", keys:["yy","p"], desc:'<code>yy</code> copies ("yanks") the line. <code>p</code> pastes it below the cursor. Like Ctrl+C / Ctrl+V.', task:'Press <code>yy</code> to copy line 1, then <code>p</code> to paste', check:e=>e._pasted, text:['const original = "copy me!"',"",""], cur:{r:0,c:0} },
+    { id:"newline", title:"New line with o", keys:["o"], desc:'<code>o</code> opens a new line below and drops you into INSERT mode. <code>O</code> (shift) opens above.', task:'Press <code>o</code> and type something on the new line', check:e=>e._openedAndTyped, text:["const x = 1","const z = 3"], cur:{r:0,c:0} },
+  ]},
+  { group: "Files", items: [
+    { id:"quit", title:"Quit with :q!", keys:[":q!"], desc:'<code>:q</code> quits. <code>:q!</code> force quits without saving — your emergency exit. <code>:wq</code> saves and quits.', task:'Type <code>:q!</code> and press <code>Enter</code> to escape', check:e=>e._quit, text:["// I want to leave","random keys asdfjkl","HELP"], cur:{r:0,c:0} },
+  ]},
+  { group: "Sandbox", items: [
+    { id:"sandbox", title:"Free play", keys:["*"], desc:'No rules. No tasks. Just a blank file and your keyboard. Try everything you\'ve learned. Type <code>i</code> to write, <code>Esc</code> to stop, <code>dd</code> to delete, <code>u</code> to undo, <code>:w</code> to "save".', task:'This is your playground — practice anything', check:()=>false, text:["","// Your sandbox — try anything!","// Press i to type, Esc to stop","// dd to delete lines, u to undo","// :w to save, :q to quit","",""], cur:{r:1,c:0}, isSandbox:true },
+  ]},
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let curLesson = 0;
+let completed = new Set();
+let lines = [];
+let curRow = 0, curCol = 0;
+let mode = 'normal';
+let pending = '';
+let cmdBuf = '';
+let yankBuf = null;
+let undoStack = [];
+let visAnchor = null;
+let msg = '';
+let track = {};
+let streak = 0;
+let keyLog = [];
+const MAX_KEY_LOG = 8;
+
+function flat() { const a=[]; LESSONS.forEach(g=>g.items.forEach(i=>a.push(i))); return a; }
+function cur() { return flat()[curLesson]; }
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  const items = flat();
+  const pct = items.length > 0 ? (completed.size / (items.length - 1)) * 100 : 0; // -1 for sandbox
+
+  let h = '';
+  h += '<div class="sidebar-brand"><h1>vim<span>.school</span></h1><p>Learn by doing</p></div>';
+
+  // Progress
+  h += '<div class="progress-wrap">';
+  h += `<div class="progress-stats"><span class="progress-label">Progress</span><span class="progress-count">${completed.size}/${items.length - 1}</span></div>`;
+  h += `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+  h += '</div>';
+
+  h += '<div class="nav-scroll">';
+  let idx = 0;
+  LESSONS.forEach(g => {
+    h += `<div class="nav-group-label">${g.group}</div>`;
+    g.items.forEach(it => {
+      const i = idx;
+      const active = curLesson === i;
+      const done = completed.has(i);
+      h += `<div class="nav-item ${active?'active':''} ${done?'done':''}" onclick="switchLesson(${i})">`;
+      h += `<span class="nav-check">${done?'✓':''}</span>`;
+      h += `<span class="nav-item-label">${it.title}</span>`;
+      h += `<span class="nav-keys">${it.keys.map(k=>`<kbd>${k}</kbd>`).join('')}</span>`;
+      h += '</div>';
+      idx++;
+    });
+  });
+  h += '</div>';
+
+  // Sandbox toggle
+  const sandboxIdx = flat().findIndex(l => l.isSandbox);
+  h += '<div class="mode-toggle">';
+  h += `<button class="mode-toggle-btn" onclick="switchLesson(${sandboxIdx})"><span class="label">⌨</span> Free Play Sandbox</button>`;
+  h += '</div>';
+
+  sb.innerHTML = h;
+}
+
+function renderMain() {
+  const m = document.getElementById('main');
+  const lesson = cur();
+  const items = flat();
+  const done = completed.has(curLesson);
+
+  let h = '';
+
+  // Topbar
+  h += '<div class="topbar">';
+  if (lesson.isSandbox) {
+    h += '<span class="sandbox-badge">SANDBOX</span>';
+  } else {
+    h += `<span class="lesson-badge">${curLesson + 1}/${items.length - 1}</span>`;
+  }
+  h += `<span class="lesson-title">${lesson.title}</span>`;
+  h += '<div class="topbar-right">';
+  if (streak > 1) h += `<span class="streak-badge">${streak} streak</span>`;
+  h += `<button class="reset-btn" onclick="resetLesson()">Reset</button>`;
+  h += '</div></div>';
+
+  // Content
+  h += '<div class="content">';
+  h += `<div class="instr-card">${lesson.desc}</div>`;
+  if (!lesson.isSandbox) {
+    h += `<div class="task-card ${done?'done':''}" id="taskCard">`;
+    h += `<span class="task-dot">${done?'✓':''}</span>`;
+    h += `<span class="task-label">${done ? 'Completed!' : lesson.task}</span>`;
+    h += '</div>';
+  }
+
+  // Terminal
+  h += '<div class="term-container">';
+  h += '<div class="term" id="term" onclick="focusTerm()">';
+  h += `<div class="term-chrome"><span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span><span class="term-chrome-title">nvim app.js</span></div>`;
+  h += '<div class="term-body" id="tbody" tabindex="0"></div>';
+  h += `<div class="term-status"><span class="st-mode ${mode}" id="stmode">${mode.toUpperCase()}</span><span class="st-file">app.js</span><span class="st-right" id="stpos">Ln ${curRow+1}:${curCol+1}</span></div>`;
+  h += '<div class="term-cmd" id="cmdline"></div>';
+  h += '</div>';
+
+  // Keystroke bar
+  h += '<div class="keystroke-bar">';
+  h += '<span class="ks-label">Keys</span>';
+  h += '<span class="ks-keys" id="kskeys"></span>';
+  h += '<span class="ks-hint" id="kshint"></span>';
+  h += '</div>';
+
+  // Hints
+  h += '<div class="hints-bar" id="hints"></div>';
+
+  h += '</div></div>';
+
+  m.innerHTML = h;
+  renderTerm();
+  renderHints();
+  renderKeyLog();
+  setTimeout(focusTerm, 50);
+}
+
+function renderTerm() {
+  const body = document.getElementById('tbody');
+  if (!body) return;
+
+  let h = '';
+  for (let r = 0; r < lines.length; r++) {
+    const isCur = r === curRow && mode !== 'command';
+    h += `<div class="tl${isCur?' cur':''}">`;
+    h += `<span class="tl-num${isCur?' cur':''}">${r+1}</span>`;
+    h += '<span class="tl-content">';
+
+    const line = lines[r];
+    if (line.length === 0) {
+      if (isCur) {
+        h += mode === 'insert' ? '<span class="c cur-line"> </span>' : '<span class="c cur-block"> </span>';
+      }
+    } else {
+      for (let c = 0; c < line.length; c++) {
+        let cls = 'c';
+        if (isCur && c === curCol) cls += mode === 'insert' ? ' cur-line' : ' cur-block';
+        if (mode === 'visual' && visAnchor && isSel(r, c)) cls += ' sel';
+        h += `<span class="${cls}">${esc(line[c])}</span>`;
+      }
+      if (isCur && curCol >= line.length) {
+        h += mode === 'insert' ? '<span class="c cur-line"> </span>' : '';
+      }
+    }
+    h += '</span></div>';
+  }
+  body.innerHTML = h;
+
+  // Status
+  const sm = document.getElementById('stmode');
+  const sp = document.getElementById('stpos');
+  if (sm) { sm.className = `st-mode ${mode}`; sm.textContent = mode.toUpperCase(); }
+  if (sp) sp.textContent = `Ln ${curRow+1}:${curCol+1}`;
+
+  // Cmdline
+  const cl = document.getElementById('cmdline');
+  if (cl) {
+    if (mode === 'command') {
+      cl.className = 'term-cmd vis';
+      cl.innerHTML = `<span class="cp">:</span>${esc(cmdBuf)}<span class="cc"> </span>`;
+    } else if (msg) {
+      cl.className = 'term-cmd vis';
+      cl.innerHTML = `<span style="color:var(--apple-l)">${esc(msg)}</span>`;
+    } else {
+      cl.className = 'term-cmd';
+    }
+  }
+}
+
+function renderHints() {
+  const el = document.getElementById('hints');
+  if (!el) return;
+  const h = {
+    normal: [['i','insert'],['v','visual'],[':','command'],['h j k l','move'],['w','word →'],['b','word ←'],['dd','del line'],['yy','copy'],['p','paste'],['u','undo'],['o','line below'],['gg','top'],['G','bottom'],['x','del char']],
+    insert: [['Esc','→ normal'],['type','anything'],['Enter','new line'],['Backspace','delete']],
+    visual: [['Esc','cancel'],['h j k l','select'],['d','delete'],['y','copy']],
+    command: [['Enter','run'],['Esc','cancel']],
+  };
+  const list = h[mode] || h.normal;
+  el.innerHTML = list.map(([k,d]) => `<span class="hint-tag" data-key="${k}"><kbd>${k}</kbd>${d}</span>`).join('');
+}
+
+function renderKeyLog() {
+  const el = document.getElementById('kskeys');
+  if (!el) return;
+  el.innerHTML = keyLog.map(k => `<span class="ks-key">${esc(k)}</span>`).join('');
+}
+
+function isSel(r, c) {
+  if (!visAnchor) return false;
+  let sR=visAnchor.r, sC=visAnchor.c, eR=curRow, eC=curCol;
+  if (sR>eR||(sR===eR&&sC>eC)) [sR,sC,eR,eC]=[eR,eC,sR,sC];
+  if (r<sR||r>eR) return false;
+  if (r===sR&&r===eR) return c>=sC&&c<=eC;
+  if (r===sR) return c>=sC;
+  if (r===eR) return c<=eC;
+  return true;
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function focusTerm() { document.getElementById('tbody')?.focus(); }
+function clamp() {
+  curRow = Math.max(0, Math.min(curRow, lines.length-1));
+  const mx = mode==='insert' ? lines[curRow].length : Math.max(0, lines[curRow].length-1);
+  curCol = Math.max(0, Math.min(curCol, mx));
+}
+function saveUndo() {
+  undoStack.push({l:lines.map(l=>l),r:curRow,c:curCol});
+  if (undoStack.length>50) undoStack.shift();
+}
+
+function logKey(k) {
+  keyLog.push(k);
+  if (keyLog.length > MAX_KEY_LOG) keyLog.shift();
+  renderKeyLog();
+
+  // Update hint text
+  const hintEl = document.getElementById('kshint');
+  if (hintEl) {
+    const hints = {
+      'i': '→ INSERT mode',
+      'Esc': '→ NORMAL mode',
+      'v': '→ VISUAL mode',
+      ':': '→ COMMAND mode',
+      'j': 'down', 'k': 'up', 'h': 'left', 'l': 'right',
+      'w': 'next word', 'b': 'prev word',
+      'dd': 'line deleted', 'yy': 'line copied',
+      'p': 'pasted', 'u': 'undone',
+      'o': 'new line below', 'G': 'go to bottom', 'gg': 'go to top',
+    };
+    hintEl.textContent = hints[k] || '';
+  }
+}
+
+function flashHint(key) {
+  document.querySelectorAll('.hint-tag').forEach(el => {
+    if (el.dataset.key === key) {
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 350);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// KEY HANDLING
+// ═══════════════════════════════════════════
+function handleKey(e) {
+  if (e.metaKey || e.altKey) return;
+  if (e.ctrlKey && !['r','d','u'].includes(e.key)) return;
+  e.preventDefault();
+  msg = '';
+  const key = e.key;
+
+  if (mode === 'normal') doNormal(key, e);
+  else if (mode === 'insert') doInsert(key, e);
+  else if (mode === 'visual') doVisual(key, e);
+  else if (mode === 'command') doCommand(key, e);
+
+  renderTerm();
+  renderHints();
+  checkLesson();
+}
+
+function doNormal(key, e) {
+  if (pending) {
+    const combo = pending + key;
+    pending = '';
+    if (combo === 'dd') { saveUndo(); lines.splice(curRow,1); if(!lines.length) lines.push(''); if(curRow>=lines.length) curRow=lines.length-1; clamp(); track._deletedLine=true; logKey('dd'); flashHint('dd'); return; }
+    if (combo === 'yy') { yankBuf=lines[curRow]; msg='Line yanked'; track._yanked=true; logKey('yy'); flashHint('yy'); return; }
+    if (combo === 'gg') { curRow=0; curCol=0; track._wentTop=true; if(track._wentBottom) track._wentBottomAndTop=true; logKey('gg'); flashHint('gg'); return; }
+    return;
+  }
+  switch(key) {
+    case 'h': curCol--; clamp(); logKey('h'); flashHint('h j k l'); break;
+    case 'j': curRow++; clamp(); logKey('j'); flashHint('h j k l'); break;
+    case 'k': curRow--; clamp(); logKey('k'); flashHint('h j k l'); break;
+    case 'l': curCol++; clamp(); logKey('l'); flashHint('h j k l'); break;
+    case 'ArrowLeft': curCol--; clamp(); logKey('←'); break;
+    case 'ArrowDown': curRow++; clamp(); logKey('↓'); break;
+    case 'ArrowUp': curRow--; clamp(); logKey('↑'); break;
+    case 'ArrowRight': curCol++; clamp(); logKey('→'); break;
+    case 'w': {
+      let r=curRow,c=curCol; const ln=lines[r];
+      while(c<ln.length&&ln[c]!==' ') c++;
+      while(c<ln.length&&ln[c]===' ') c++;
+      if(c>=ln.length&&r<lines.length-1){r++;c=0;while(c<lines[r].length&&lines[r][c]===' ')c++;}
+      curRow=r;curCol=c;clamp();
+      track._wCount=(track._wCount||0)+1;
+      logKey('w'); flashHint('w');
+    } break;
+    case 'b': {
+      let r=curRow,c=curCol;
+      if(c===0&&r>0){r--;c=lines[r].length;}
+      c--;const ln=lines[r];
+      while(c>0&&ln[c]===' ')c--;
+      while(c>0&&ln[c-1]!==' ')c--;
+      curRow=r;curCol=Math.max(0,c);clamp();
+      logKey('b'); flashHint('b');
+    } break;
+    case 'G': curRow=lines.length-1;curCol=0;clamp(); track._wentBottom=true; logKey('G'); flashHint('G'); break;
+    case 'i': mode='insert'; logKey('i'); flashHint('i'); break;
+    case 'a': mode='insert'; curCol++; if(curCol>lines[curRow].length) curCol=lines[curRow].length; logKey('a'); break;
+    case 'A': mode='insert'; curCol=lines[curRow].length; logKey('A'); break;
+    case 'o': saveUndo(); mode='insert'; curRow++; lines.splice(curRow,0,''); curCol=0; track._openedLine=true; logKey('o'); flashHint('o'); break;
+    case 'O': saveUndo(); mode='insert'; lines.splice(curRow,0,''); curCol=0; logKey('O'); break;
+    case 'v': mode='visual'; visAnchor={r:curRow,c:curCol}; logKey('v'); flashHint('v'); break;
+    case ':': mode='command'; cmdBuf=''; logKey(':'); flashHint(':'); break;
+    case 'p': if(yankBuf!==null){saveUndo();curRow++;lines.splice(curRow,0,yankBuf);curCol=0;track._pasted=true;logKey('p');flashHint('p');} break;
+    case 'u': if(undoStack.length){const s=undoStack.pop();lines=s.l;curRow=s.r;curCol=s.c;track._undid=true;msg='Undone';logKey('u');flashHint('u');} break;
+    case 'x': if(lines[curRow].length){saveUndo();lines[curRow]=lines[curRow].slice(0,curCol)+lines[curRow].slice(curCol+1);clamp();logKey('x');flashHint('x');} break;
+    case 'd': case 'y': case 'g': pending=key; break;
+  }
+}
+
+function doInsert(key, e) {
+  if (key==='Escape') { mode='normal'; curCol=Math.max(0,curCol-1); clamp(); if(track._inserted) track._insertedAndEscaped=true; if(track._openedLine&&track._inserted) track._openedAndTyped=true; logKey('Esc'); return; }
+  if (key==='Backspace') {
+    if(curCol>0){lines[curRow]=lines[curRow].slice(0,curCol-1)+lines[curRow].slice(curCol);curCol--;}
+    else if(curRow>0){const p=lines[curRow-1];curCol=p.length;lines[curRow-1]=p+lines[curRow];lines.splice(curRow,1);curRow--;}
+    logKey('⌫'); return;
+  }
+  if (key==='Enter') {
+    const b=lines[curRow].slice(0,curCol),a=lines[curRow].slice(curCol);
+    lines[curRow]=b;curRow++;lines.splice(curRow,0,a);curCol=0;
+    track._inserted=true; logKey('↵'); return;
+  }
+  if (key.length===1) {
+    lines[curRow]=lines[curRow].slice(0,curCol)+key+lines[curRow].slice(curCol);
+    curCol++; track._inserted=true; logKey(key);
+  }
+}
+
+function doVisual(key, e) {
+  if (key==='Escape') { mode='normal'; visAnchor=null; if(track._visMoved) track._selectedAndEscaped=true; logKey('Esc'); return; }
+  switch(key) {
+    case 'h': curCol--; clamp(); track._visMoved=true; logKey('h'); break;
+    case 'j': curRow++; clamp(); track._visMoved=true; logKey('j'); break;
+    case 'k': curRow--; clamp(); track._visMoved=true; logKey('k'); break;
+    case 'l': curCol++; clamp(); track._visMoved=true; logKey('l'); break;
+    case 'd': saveUndo(); delSel(); mode='normal'; visAnchor=null; logKey('d'); break;
+    case 'y': yankSel(); mode='normal'; visAnchor=null; msg='Yanked'; logKey('y'); break;
+  }
+}
+
+function delSel() {
+  if(!visAnchor)return;
+  let sR=visAnchor.r,sC=visAnchor.c,eR=curRow,eC=curCol;
+  if(sR>eR||(sR===eR&&sC>eC))[sR,sC,eR,eC]=[eR,eC,sR,sC];
+  if(sR===eR) lines[sR]=lines[sR].slice(0,sC)+lines[sR].slice(eC+1);
+  else{lines[sR]=lines[sR].slice(0,sC)+lines[eR].slice(eC+1);lines.splice(sR+1,eR-sR);}
+  curRow=sR;curCol=sC;clamp();
+}
+function yankSel() {
+  if(!visAnchor)return;
+  let sR=visAnchor.r,sC=visAnchor.c,eR=curRow,eC=curCol;
+  if(sR>eR||(sR===eR&&sC>eC))[sR,sC,eR,eC]=[eR,eC,sR,sC];
+  yankBuf=sR===eR?lines[sR].slice(sC,eC+1):lines[sR].slice(sC);
+}
+
+function doCommand(key, e) {
+  if(key==='Escape'){mode='normal';cmdBuf='';logKey('Esc');return;}
+  if(key==='Enter'){execCmd(cmdBuf);mode='normal';cmdBuf='';logKey('↵');return;}
+  if(key==='Backspace'){cmdBuf=cmdBuf.slice(0,-1);if(!cmdBuf)mode='normal';logKey('⌫');return;}
+  if(key.length===1){cmdBuf+=key;logKey(key);}
+}
+
+function execCmd(cmd) {
+  cmd=cmd.trim();
+  if(cmd==='w'){msg='"app.js" written';track._saved=true;toast('File saved');}
+  else if(cmd==='wq'){msg='Saved and quit';track._saved=true;track._quit=true;toast('Saved & quit');}
+  else if(cmd==='q'||cmd==='q!'){msg='Quit';track._quit=true;toast('Escaped Neovim!');}
+  else msg='Not a command: '+cmd;
+}
+
+// ═══════════════════════════════════════════
+// LESSONS
+// ═══════════════════════════════════════════
+function switchLesson(i) { curLesson=i; resetLesson(); }
+
+function resetLesson() {
+  const l=cur();
+  lines=l.text.map(s=>s);
+  curRow=l.cur.r; curCol=l.cur.c;
+  mode='normal'; pending=''; cmdBuf=''; yankBuf=null;
+  undoStack=[]; visAnchor=null; msg=''; track={}; keyLog=[];
+  renderSidebar(); renderMain();
+}
+
+function checkLesson() {
+  const l=cur();
+  if(l.isSandbox) return;
+  const ev={...track, row:curRow, col:curCol, mode, lines:[...lines]};
+  if(!completed.has(curLesson) && l.check(ev)) {
+    completed.add(curLesson);
+    streak++;
+    toast('Lesson complete!');
+    celebrate();
+    renderSidebar();
+    const tc=document.getElementById('taskCard');
+    if(tc){tc.className='task-card done';tc.innerHTML='<span class="task-dot">✓</span><span class="task-label">Completed!</span>';}
+    // Auto-advance after delay
+    setTimeout(() => {
+      const items = flat();
+      if (curLesson < items.length - 2) { // -2 to skip sandbox
+        switchLesson(curLesson + 1);
+      }
+    }, 1800);
+  }
+}
+
+function toast(s) {
+  const t=document.getElementById('toast');
+  t.textContent=s; t.classList.add('vis');
+  setTimeout(()=>t.classList.remove('vis'), 2200);
+}
+
+function celebrate() {
+  const colors = ['var(--peach)','var(--apple-l)','var(--cobalt-l)','var(--solaris)','var(--lilac)','var(--syn-type)'];
+  for(let i=0;i<24;i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = (Math.random()*100)+'vw';
+    el.style.top = '-10px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDelay = (Math.random()*0.6)+'s';
+    el.style.animationDuration = (1+Math.random()*1)+'s';
+    el.style.width = (4+Math.random()*6)+'px';
+    el.style.height = (4+Math.random()*6)+'px';
+    el.style.borderRadius = Math.random()>0.5?'50%':'1px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 2500);
+  }
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+resetLesson();
+
+document.addEventListener('keydown', e => {
+  const a=document.activeElement;
+  const tb=document.getElementById('tbody');
+  if(a===tb||a===document.body) handleKey(e);
+});
+</script>
+</body>
+</html>
